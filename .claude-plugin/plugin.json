@@ -1,0 +1,9 @@
+{
+  "name": "lead-gen",
+  "description": "B2B lead generation in two phases: ICP interview, then parallel deep research that finds, verifies and enriches companies and decision-makers.",
+  "author": {
+    "name": "AGS Venture Lab",
+    "email": "invest@agsfoods.net"
+  },
+  "keywords": ["lead-generation", "icp", "b2b", "research", "firecrawl"]
+}
