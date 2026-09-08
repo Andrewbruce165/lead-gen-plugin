@@ -124,6 +124,68 @@ def cmd_score(d, n):
     print(f"raw={len(records)} merged={len(merged)} scored={len(scored)} kept={len(keep)}")
 
 
+COMPANY_HEADERS = ["#", "Company", "Website", "LinkedIn", "Instagram", "Facebook", "Google Maps", "Reviews",
+                   "Score", "Verification", "Triggers (source URL)", "Public contacts", "Why it fits"]
+PEOPLE_HEADERS = ["#", "Company", "Name", "Title", "Role", "Contacts", "Profile source"]
+
+
+def fmt_contacts(items):
+    """value_source; value_source — source label falls back to the source_url host."""
+    parts = [f"{c['value']}_{c.get('source') or norm_domain(c.get('source_url')) or 'unknown'}"
+             for c in items or [] if c.get("value")]
+    return "; ".join(parts) or "—"
+
+
+def md_table(headers, rows):
+    esc = lambda v: ("—" if v in (None, "", []) else str(v)).replace("|", "\\|").replace("\n", " ")
+    lines = ["| " + " | ".join(headers) + " |", "|" + "---|" * len(headers)]
+    lines += ["| " + " | ".join(esc(v) for v in r) + " |" for r in rows]
+    return "\n".join(lines) + "\n"
+
+
+def write_both(base, headers, rows):
+    Path(str(base) + ".md").write_text(md_table(headers, rows))
+    with open(str(base) + ".csv", "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(headers)
+        w.writerows([["" if v is None else v for v in r] for r in rows])
+
+
+def load_json(path, default):
+    return json.loads(path.read_text()) if path.exists() else default
+
+
+def cmd_tables(d, n, day):
+    icp = json.loads((d / "icp.json").read_text())
+    r = d / "research"
+    scored = load_json(r / "scored.json", [])
+    verified = {norm_domain(v["domain"]): v for v in load_json(r / "verified.json", [])}
+    contacts = load_json(r / "contacts.json", [])
+    trig = {t["id"]: t["text"] for t in icp.get("triggers") or []}
+
+    kept = [c for c in scored if verified.get(c["domain"], {}).get("status") != "rejected"][:n]
+    rows = []
+    for i, c in enumerate(kept, 1):
+        v = verified.get(c["domain"], {})
+        trs = "; ".join(f"{trig.get(e['criterion'], e['criterion'])} ({e.get('url')})"
+                        for e in c.get("evidence") or [] if e.get("found") and e.get("criterion") in trig)
+        rows.append([i, c.get("company"), c.get("website"), c.get("linkedin"), c.get("instagram"), c.get("facebook"),
+                     c.get("google_maps"), c.get("reviews"), c.get("score"), v.get("status", "unverifiable"),
+                     trs, fmt_contacts(c.get("public_contacts")), c.get("why") or v.get("reason")])
+    write_both(d / f"companies-{day}", COMPANY_HEADERS, rows)
+
+    order = {c["domain"]: i for i, c in enumerate(kept)}
+    entries = [e for e in contacts if norm_domain(e.get("domain")) in order]
+    entries.sort(key=lambda e: order[norm_domain(e["domain"])])
+    prows = []
+    for e in entries:
+        for p in e.get("people") or []:
+            prows.append([len(prows) + 1, e.get("company"), p.get("name"), p.get("title"), p.get("role"),
+                          fmt_contacts(p.get("contacts")), p.get("profile_url")])
+    write_both(d / f"people-{day}", PEOPLE_HEADERS, prows)
+    print(f"companies={len(rows)} people={len(prows)}")
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)

@@ -60,5 +60,42 @@ def test_score():
     shutil.rmtree(d)
     print("test_score ok")
 
+def test_tables():
+    d = setup()
+    (d / "research" / "scored.json").write_text(json.dumps([
+        {"company": "Alpha", "domain": "alpha.com", "website": "https://alpha.com", "linkedin": None, "score": 100,
+         "why": "fits all", "channels": ["registries"],
+         "evidence": [{"criterion": "T1", "found": True, "url": "https://jobs/1", "date": "2026-08"}],
+         "public_contacts": [{"type": "phone", "value": "+1 555", "source": "website", "source_url": "https://alpha.com"},
+                             {"type": "email", "value": "info@alpha.com", "source": None, "source_url": "https://maps.google.com/x"}]},
+        {"company": "Beta", "domain": "beta.com", "score": 72, "evidence": [], "public_contacts": [], "channels": []},
+        {"company": "Gamma", "domain": "gamma.com", "score": 72, "evidence": [], "public_contacts": [], "channels": []},
+    ]))
+    (d / "research" / "verified.json").write_text(json.dumps([
+        {"domain": "alpha.com", "status": "confirmed", "checked": [], "reason": ""},
+        {"domain": "beta.com", "status": "rejected", "checked": [], "reason": "retail only"},
+    ]))
+    (d / "research" / "contacts.json").write_text(json.dumps([
+        {"domain": "www.alpha.com", "company": "Alpha", "people": [
+            {"name": "Ann Lee", "title": "Procurement Manager", "role": "decision-maker",
+             "profile_url": "https://linkedin.com/in/ann",
+             "contacts": [{"type": "email", "value": "ann@alpha.com", "source": "hunter", "source_url": "https://hunter.io"}]},
+            {"name": "Bob Ray", "title": "CFO", "role": "blocker", "profile_url": "https://alpha.com/team", "contacts": []}]},
+    ]))
+    out = run("tables", str(d), "--n", "2", "--date", "2026-09-08")
+    assert "companies=2 people=2" in out, out
+    md = (d / "companies-2026-09-08.md").read_text()
+    assert "| Beta |" not in md and "| Gamma |" in md          # rejected dropped, unverifiable kept
+    assert "+1 555_website; info@alpha.com_maps.google.com" in md
+    assert "hiring (https://jobs/1)" in md and "| confirmed |" in md and "| unverifiable |" in md
+    rows = list(__import__("csv").reader(open(d / "companies-2026-09-08.csv")))
+    assert rows[0][0] == "#" and len(rows) == 3 and rows[1][1] == "Alpha"
+    pmd = (d / "people-2026-09-08.md").read_text()
+    assert "| Ann Lee | Procurement Manager | decision-maker | ann@alpha.com_hunter |" in pmd
+    assert "| Bob Ray | CFO | blocker | — |" in pmd
+    shutil.rmtree(d)
+    print("test_tables ok")
+
 if __name__ == "__main__":
     test_score()
+    test_tables()
