@@ -1,0 +1,18 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "andrewbruce",
+  "description": "Andrew Bruce's Claude Code plugins",
+  "owner": {
+    "name": "Andrew Bruce",
+    "email": "invest@agsfoods.net"
+  },
+  "plugins": [
+    {
+      "name": "lead-gen",
+      "description": "B2B lead generation in two phases: ICP interview, then parallel deep research that finds, verifies and enriches companies and decision-makers.",
+      "source": "./",
+      "category": "productivity",
+      "homepage": "https://github.com/Andrewbruce165/lead-gen-plugin"
+    }
+  ]
+}

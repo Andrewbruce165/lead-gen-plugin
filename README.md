@@ -5,7 +5,16 @@ Two-phase B2B lead generation.
 1. `/lead-gen` — interview → Ideal Customer Profile saved to `leads/<slug>/icp-brief.md` + `icp.json`.
 2. `deep-research` skill — parallel channel agents → deterministic scoring → verifier pass → contact enrichment → `companies-<date>.md/.csv` and `people-<date>.md/.csv`.
 
-## Install (local)
+## Install
+
+From GitHub (the repo doubles as a single-plugin marketplace named `andrewbruce`):
+
+```bash
+claude plugin marketplace add Andrewbruce165/lead-gen-plugin
+claude plugin install lead-gen@andrewbruce
+```
+
+Or load from a local checkout without installing:
 
 ```bash
 claude --plugin-dir /path/to/lead-gen-plugin
