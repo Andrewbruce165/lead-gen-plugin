@@ -1,0 +1,46 @@
+{
+  "slug": "uae-food-distributors",
+  "label": "UAE HoReCa food distributors, 20–200 staff",
+  "n": 40,
+  "offer": "Frozen and chilled food supply contracts, AED 50k–500k/year, 1–3 month sales cycle",
+  "segment": "Food distribution / HoReCa supply, B2B",
+  "firmographics": "20–200 employees, 1–5 warehouses, privately owned, operating 3+ years",
+  "geography": {"countries": ["United Arab Emirates"], "languages": ["English", "Arabic"]},
+  "decision_makers": [
+    {"title": "Procurement Manager", "role": "decision-maker"},
+    {"title": "Owner / General Manager", "role": "decision-maker"},
+    {"title": "Category Manager", "role": "influencer"},
+    {"title": "Finance Manager", "role": "blocker"}
+  ],
+  "core_pain": "Unstable supply and price volatility of imported frozen goods",
+  "must_have": [
+    {"id": "M1", "text": "Distributes food to restaurants/hotels in the UAE (stated on website or directory)"},
+    {"id": "M2", "text": "Has own cold-chain warehouse or fleet (photos, page, or job ads)"}
+  ],
+  "nice_to_have": [
+    {"id": "N1", "text": "Lists 50+ SKUs or a product catalogue online"},
+    {"id": "N2", "text": "Serves 2+ emirates"}
+  ],
+  "triggers": [
+    {"id": "T1", "text": "Hiring procurement or supply-chain roles", "where": "LinkedIn Jobs, Bayt, Indeed"},
+    {"id": "T2", "text": "Opened a new warehouse or branch", "where": "Company news, LinkedIn posts, Google Maps new location"}
+  ],
+  "disqualifiers": ["Pure retail without B2B", "Government-owned", "Under 10 employees"],
+  "lookalike_anchor": "Acme Foods LLC — 80 staff, 2 warehouses, bought AED 300k/year because of price stability",
+  "exclusions": [
+    {"name": "Acme Foods LLC", "domain": "acmefoods.ae"},
+    {"name": "BigRival Trading", "domain": "bigrival.com"}
+  ],
+  "search_plan": [
+    {"channel": "registries", "sources": ["Dubai Chamber directory", "Yellow Pages UAE", "Kompass UAE"],
+     "queries": ["food distributor Dubai HoReCa", "frozen food supplier UAE restaurants", "موزع مواد غذائية دبي"]},
+    {"channel": "maps_reviews", "sources": ["Google Maps", "Yelp UAE"],
+     "queries": ["food distribution company Dubai", "foodstuff trading Sharjah cold storage"]},
+    {"channel": "social", "sources": ["LinkedIn company pages", "Instagram"],
+     "queries": ["site:linkedin.com/company food distribution UAE", "foodstuff trading LLC Dubai instagram"]},
+    {"channel": "news_triggers", "sources": ["Gulf News", "Zawya", "LinkedIn Jobs", "Bayt"],
+     "queries": ["food distributor UAE new warehouse 2026", "procurement manager food distribution Dubai job"]},
+    {"channel": "associations_events", "sources": ["Gulfood exhibitor list", "UAE Food & Beverage Business Group"],
+     "queries": ["Gulfood 2026 exhibitors UAE distributor"]}
+  ]
+}

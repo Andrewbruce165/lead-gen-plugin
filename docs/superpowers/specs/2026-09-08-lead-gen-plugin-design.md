@@ -40,6 +40,7 @@ lead-gen-plugin/
 ```
 leads/<slug>/
 ├── icp-brief.md              # Phase 1 output
+├── icp.json                  # машинная копия ICP (criteria ids, exclusions, search plan) для скрипта и агентов
 ├── research/
 │   ├── <channel>.json        # сырые находки каждого агента-канала
 │   ├── verified.json         # результат verifier pass
