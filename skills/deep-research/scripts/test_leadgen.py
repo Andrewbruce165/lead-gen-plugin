@@ -96,6 +96,52 @@ def test_tables():
     shutil.rmtree(d)
     print("test_tables ok")
 
+def test_name_only():
+    d = setup()
+    (d / "research" / "registries.json").write_text(json.dumps([
+        {"company": "Alpha Traders", "domain": None, "website": None, "evidence": ev("M1", "M2"), "public_contacts": []},
+        {"company": "Beta Traders", "domain": None, "website": None, "evidence": ev("M1", "M2"), "public_contacts": []},
+    ]))
+    run("score", str(d), "--n", "2")
+    scored = json.loads((d / "research" / "scored.json").read_text())
+    assert {c["company"] for c in scored} == {"Alpha Traders", "Beta Traders"}, scored
+    keys = {c["key"] for c in scored}
+    assert keys == {"name:alpha traders", "name:beta traders"}, keys
+
+    (d / "research" / "scored.json").write_text(json.dumps(scored))
+    (d / "research" / "verified.json").write_text(json.dumps([
+        {"company": "Alpha Traders", "domain": None, "status": "rejected", "reason": "closed"},
+    ]))
+    (d / "research" / "contacts.json").write_text(json.dumps([
+        {"company": "Beta Traders", "domain": None, "people": [
+            {"name": "Cy Ray", "title": "Owner", "role": "decision-maker", "profile_url": "https://x", "contacts": []}]},
+    ]))
+    out = run("tables", str(d), "--n", "2", "--date", "2026-09-08")
+    assert "companies=1 people=1" in out, out
+    md = (d / "companies-2026-09-08.md").read_text()
+    assert "Alpha Traders" not in md and "Beta Traders" in md, md
+    pmd = (d / "people-2026-09-08.md").read_text()
+    assert "Cy Ray" in pmd and "Beta Traders" in pmd, pmd
+    shutil.rmtree(d)
+    print("test_name_only ok")
+
+
+def test_collect():
+    d = setup()
+    (d / "research" / "verified-1.json").write_text(json.dumps([{"domain": "a.com", "status": "confirmed"}]))
+    (d / "research" / "verified-2.json").write_text(json.dumps([{"domain": "b.com", "status": "rejected"}]))
+    out = run("collect", str(d), "verified")
+    assert "collected=2 files=2" in out, out
+    merged = json.loads((d / "research" / "verified.json").read_text())
+    assert {m["domain"] for m in merged} == {"a.com", "b.com"}, merged
+    assert not (d / "research" / "verified-1.json").exists()
+    assert not (d / "research" / "verified-2.json").exists()
+    shutil.rmtree(d)
+    print("test_collect ok")
+
+
 if __name__ == "__main__":
     test_score()
     test_tables()
+    test_name_only()
+    test_collect()

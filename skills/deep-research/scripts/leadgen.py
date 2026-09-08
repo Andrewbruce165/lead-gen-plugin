@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """leadgen.py — deterministic merge / score / tables for the deep-research skill (stdlib only).
 
-  leadgen.py score  <icp_dir> [--n N]                   research/<channel>.json -> research/scored.json
-  leadgen.py tables <icp_dir> [--n N] [--date YYYY-MM-DD] scored+verified+contacts -> companies-*.{md,csv}, people-*.{md,csv}
+  leadgen.py score   <icp_dir> [--n N]                   research/<channel>.json -> research/scored.json
+  leadgen.py tables  <icp_dir> [--n N] [--date YYYY-MM-DD] scored+verified+contacts -> companies-*.{md,csv}, people-*.{md,csv}
+  leadgen.py collect <icp_dir> <prefix>                  research/<prefix>-*.json -> research/<prefix>.json (batch files removed)
 """
 import argparse, csv, json, math, re
 from datetime import date, timedelta
@@ -38,7 +39,7 @@ def merge(records):
         if k in ("", "name:"):
             continue
         m = out.setdefault(k, {"company": c.get("company"), "domain": norm_domain(c.get("domain") or c.get("website")),
-                                "evidence": [], "public_contacts": [], "channels": []})
+                                "key": k, "evidence": [], "public_contacts": [], "channels": []})
         for f in CHANNEL_FIELDS:
             if c.get(f) and not m.get(f):
                 m[f] = c[f]
@@ -81,14 +82,14 @@ def recent(e, today):
 
 def score(c, icp, today):
     """60 must-have (all required, else None) + 25 nice-to-have + 15 triggers (recent only)."""
-    found = {e["criterion"] for e in c["evidence"] if e.get("found") and e.get("url")}
-    must = [x["id"] for x in icp["must_have"]]
+    found = {e.get("criterion") for e in c["evidence"] if e.get("found") and e.get("url")}
+    must = [x["id"] for x in icp.get("must_have") or []]
     if any(i not in found for i in must):
         return None
     nice = [x["id"] for x in icp.get("nice_to_have") or []]
     trig = [x["id"] for x in icp.get("triggers") or []]
-    trig_found = {e["criterion"] for e in c["evidence"]
-                  if e.get("found") and e.get("url") and e["criterion"] in trig and recent(e, today)}
+    trig_found = {e.get("criterion") for e in c["evidence"]
+                  if e.get("found") and e.get("url") and e.get("criterion") in trig and recent(e, today)}
     s = 60.0
     if nice:
         s += 25.0 * sum(i in found for i in nice) / len(nice)
@@ -159,24 +160,26 @@ def cmd_tables(d, n, day):
     icp = json.loads((d / "icp.json").read_text())
     r = d / "research"
     scored = load_json(r / "scored.json", [])
-    verified = {norm_domain(v["domain"]): v for v in load_json(r / "verified.json", [])}
+    verified = {key(v): v for v in load_json(r / "verified.json", []) if key(v) not in ("", "name:")}
     contacts = load_json(r / "contacts.json", [])
     trig = {t["id"]: t["text"] for t in icp.get("triggers") or []}
+    if not verified:
+        print("warning: no verifier records — all companies marked unverifiable")
 
-    kept = [c for c in scored if verified.get(c["domain"], {}).get("status") != "rejected"][:n]
+    kept = [c for c in scored if verified.get(c.get("key") or key(c), {}).get("status") != "rejected"][:n]
     rows = []
     for i, c in enumerate(kept, 1):
-        v = verified.get(c["domain"], {})
-        trs = "; ".join(f"{trig.get(e['criterion'], e['criterion'])} ({e.get('url')})"
+        v = verified.get(c.get("key") or key(c), {})
+        trs = "; ".join(f"{trig.get(e.get('criterion'), e.get('criterion'))} ({e.get('url')})"
                         for e in c.get("evidence") or [] if e.get("found") and e.get("criterion") in trig)
         rows.append([i, c.get("company"), c.get("website"), c.get("linkedin"), c.get("instagram"), c.get("facebook"),
                      c.get("google_maps"), c.get("reviews"), c.get("score"), v.get("status", "unverifiable"),
                      trs, fmt_contacts(c.get("public_contacts")), c.get("why") or v.get("reason")])
     write_both(d / f"companies-{day}", COMPANY_HEADERS, rows)
 
-    order = {c["domain"]: i for i, c in enumerate(kept)}
-    entries = [e for e in contacts if norm_domain(e.get("domain")) in order]
-    entries.sort(key=lambda e: order[norm_domain(e["domain"])])
+    order = {(c.get("key") or key(c)): i for i, c in enumerate(kept)}
+    entries = [e for e in contacts if key(e) in order]
+    entries.sort(key=lambda e: order[key(e)])
     prows = []
     for e in entries:
         for p in e.get("people") or []:
@@ -186,18 +189,35 @@ def cmd_tables(d, n, day):
     print(f"companies={len(rows)} people={len(prows)}")
 
 
+def cmd_collect(d, prefix):
+    r = d / "research"
+    files = sorted(r.glob(f"{prefix}-*.json"))
+    merged = []
+    for f in files:
+        merged += json.loads(f.read_text() or "[]")
+    (r / f"{prefix}.json").write_text(json.dumps(merged, ensure_ascii=False, indent=1))
+    for f in files:
+        f.unlink()
+    print(f"collected={len(merged)} files={len(files)}")
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
-    for name in ("score", "tables"):
+    for name in ("score", "tables", "collect"):
         s = sub.add_parser(name)
         s.add_argument("icp_dir", type=Path)
-        s.add_argument("--n", type=int, default=40)
+        if name == "collect":
+            s.add_argument("prefix")
+        else:
+            s.add_argument("--n", type=int, default=40)
         if name == "tables":
             s.add_argument("--date", default=date.today().isoformat())
     a = p.parse_args()
     if a.cmd == "score":
         cmd_score(a.icp_dir, a.n)
+    elif a.cmd == "collect":
+        cmd_collect(a.icp_dir, a.prefix)
     else:
         cmd_tables(a.icp_dir, a.n, a.date)  # Task 5
 
