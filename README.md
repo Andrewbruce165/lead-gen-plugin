@@ -14,6 +14,21 @@ claude plugin marketplace add Andrewbruce165/lead-gen-plugin
 claude plugin install lead-gen@andrewbruce
 ```
 
+For claude.ai/code (web) and for teams — the web app has no interactive `/plugin` UI, so declare the plugin in your **project's** `.claude/settings.json` (commit it; CLI and desktop pick it up too):
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "andrewbruce": {
+      "source": { "source": "github", "repo": "Andrewbruce165/lead-gen-plugin" }
+    }
+  },
+  "enabledPlugins": {
+    "lead-gen@andrewbruce": {}
+  }
+}
+```
+
 Or load from a local checkout without installing:
 
 ```bash
