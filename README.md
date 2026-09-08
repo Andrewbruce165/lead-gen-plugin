@@ -32,3 +32,12 @@ test.sh
 ```
 
 Design: `docs/superpowers/specs/2026-09-08-lead-gen-plugin-design.md`.
+
+## Smoke test
+
+```bash
+./test.sh
+cd "$(mktemp -d)" && claude --plugin-dir /path/to/lead-gen-plugin
+# > /lead-gen  → interview → go → run research (N=20, free tier)
+# expect: leads/<slug>/{icp-brief.md,icp.json,research/*.json,companies-<date>.{md,csv},people-<date>.{md,csv}}
+```
