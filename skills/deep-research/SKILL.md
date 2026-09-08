@@ -15,6 +15,7 @@ You orchestrate; subagents search. You never search the web yourself in this ski
    - **Firecrawl:** "Paid API key configured" / "Free hosted tier (default)". Sets budgets: free → 15 search / 20 scrape per channel agent; paid → 45 / 60.
    - **Extra sources you have access to** (multiSelect): Apollo, Hunter, LinkedIn Sales Navigator, industry database (name it), none.
    - **How many companies:** `N` (recommended) / 20 / 60 / 100.
+   The answer is `N` for the rest of the run; write it back to `leads/<slug>/icp.json` as `n` (Edit tool) so a resumed session sees the same value. Every later `--n` uses this N.
 4. Create `leads/<slug>/research/` if missing. If it already contains `<channel>.json` files, ask: reuse them (skip Step 2) or re-run.
 
 ## Step 1 — Channels
@@ -39,11 +40,11 @@ Report the printed line (`raw= merged= scored= kept=`). If `kept=0`: tell the us
 
 ## Step 4 — Verifier pass
 
-Read `leads/<slug>/research/scored.json` **only to split it into batches of ~10 companies** (company, domain, website, evidence URLs — strip contacts to save context). Read `SKILL_DIR/prompts/verifier.md`, fill `MUST_HAVE_LIST` (ids + text), `COMPANIES_JSON` (the batch), `OUTPUT_PATH` = `leads/<slug>/research/verified-<batch>.json`. Launch all batches in parallel (`description: verify:<batch>`). Then concatenate all `verified-*.json` arrays into `leads/<slug>/research/verified.json` (Bash one-liner: `python3 -c 'import json,glob;json.dump(sum((json.load(open(f)) for f in sorted(glob.glob("leads/<slug>/research/verified-*.json"))),[]),open("leads/<slug>/research/verified.json","w"))'`) and delete the batch files.
+Read `leads/<slug>/research/scored.json` **only to split it into batches of ~10 companies** (company, domain, website, evidence URLs — strip contacts to save context). `COMPANIES_JSON` for verifier batches includes `company` and `domain` (plus `website` and evidence URLs) so the verifier can echo them back. Read `SKILL_DIR/prompts/verifier.md`, fill `MUST_HAVE_LIST` (ids + text), `COMPANIES_JSON` (the batch), `OUTPUT_PATH` = `leads/<slug>/research/verified-<batch>.json`. Launch all batches in parallel (`description: verify:<batch>`). Then run: `python3 SKILL_DIR/scripts/leadgen.py collect leads/<slug> verified`.
 
 ## Step 5 — Contact enrichment
 
-Take companies from `scored.json` whose verified status is not `rejected`, top `N`. Batches of ~8. Read `SKILL_DIR/prompts/contacts.md`, fill `DECISION_MAKERS` (title — role lines from `icp.decision_makers`), `COMPANIES_JSON` (company, domain, website, linkedin only), `EXTRA_SOURCES`, budgets (same as channel agents), `OUTPUT_PATH` = `leads/<slug>/research/contacts-<batch>.json`. Launch all batches in parallel (`description: contacts:<batch>`). Concatenate into `research/contacts.json` the same way as Step 4 and delete batch files.
+Take companies from `scored.json` whose verified status is not `rejected`, top `N`. Batches of ~8. Read `SKILL_DIR/prompts/contacts.md`, fill `DECISION_MAKERS` (title — role lines from `icp.decision_makers`), `COMPANIES_JSON` (company, domain, website, linkedin only), `EXTRA_SOURCES`, budgets (same as channel agents), `OUTPUT_PATH` = `leads/<slug>/research/contacts-<batch>.json`. Launch all batches in parallel (`description: contacts:<batch>`). Then run: `python3 SKILL_DIR/scripts/leadgen.py collect leads/<slug> contacts`.
 
 ## Step 6 — Tables and summary
 

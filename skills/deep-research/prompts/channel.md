@@ -23,6 +23,7 @@ Query patterns (run in {{LANGUAGES}}; adapt and add your own):
 - Do NOT score. Record which criteria you could confirm, with the URL where you saw it.
 - For triggers include `"date": "YYYY-MM"` when the source shows one, else `null`.
 - Public contacts of the COMPANY only (phone, email, contact form) — with a `source` label (`website`, `google_maps`, `linkedin`, `facebook`, `directory:<name>`) and `source_url`. No personal contacts here.
+- `reviews`: link to the company's Google Maps / Yandex / industry review page when your channel surfaces one; `null` otherwise.
 - Quality over quantity: 8 verified companies beat 30 maybes.
 
 # Output

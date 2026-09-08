@@ -19,6 +19,6 @@ You are a verification agent. For each company below, open its website (and the 
 Write a JSON array to `{{OUTPUT_PATH}}` (Write tool). Reply with counts of confirmed / rejected / unverifiable.
 
 ```json
-{"domain": "example.com", "status": "confirmed|rejected|unverifiable",
+{"company": "str", "domain": "example.com", "status": "confirmed|rejected|unverifiable",
  "checked": [{"criterion": "M1", "confirmed": true, "url": "str"}], "reason": "one line"}
 ```
